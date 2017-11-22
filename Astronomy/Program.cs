@@ -63,10 +63,10 @@ namespace Astronomy
                 switch (index)
                 {
                     case 1:
-                        star.ArcSeconds = value;
+                        star.Spatial.ArcSeconds = value;
                         break;
                     case 2:
-                        star.ArcMinutes = value;
+                        star.Spatial.ArcMinutes = value;
                         break;
                     case 3:
                         star.Radius = value;
@@ -75,10 +75,10 @@ namespace Astronomy
                         star.Temperature = value;
                         break;
                     case 5:
-                        star.Lightyears = value;
+                        star.Spatial.Lightyears = value;
                         break;
                     case 6:
-                        star.Parsecs = value;
+                        star.Spatial.Parsecs = value;
                         break;
                     case 7:
                         star.Luminosity = value;
@@ -92,10 +92,10 @@ namespace Astronomy
                     case 10:
                         throw new NotImplementedException("You lazy bum you didn't do this bit yet");
                     case 11:
-                        star.Redshift = value;
+                        star.Spatial.Redshift = value;
                         break;
                     case 12:
-                        star.RegressionalVelocity = value;
+                        star.Spatial.RegressionalVelocity = value;
                         break;
 
                 }
@@ -112,42 +112,11 @@ namespace Astronomy
 
     }
 
-    struct Star
-    {
-        public double ParallaxMinutes
-        {
-            get { return this.ParallaxMinutes; }
-            set
-            {
-                this.ParallaxMinutes = value;
-                ParallaxSeconds = value * 60;
-            }
-        }
-        public double ParallaxSeconds
-        {
-            get { return this.ParallaxSeconds; }
-            set
-            {
-                this.ParallaxSeconds = value;
-                ParallaxMinutes = value / 60;
-            }
-        }
-        public double Luminosity
-        { get; set; }
-        public double Brightness
-        { get; set; }
-        public double AbsoluteMagnitude
-        { get; set; }
-
-    }
-
     class BetterStar
     {
-        private Dictionary<string, bool> WhatIKnow = new Dictionary<string, bool>();
-        private Dictionary<string, double> WhatTheyAre = new Dictionary<string, double>();
 
         private Dictionary<string, double> SunValues = new Dictionary<string, double>();
-
+        public SpatialMeasurements Spatial = new SpatialMeasurements();
         /* Things about a star I can know:
          * Radius (meters)
          * Temperature (kelvin)
@@ -166,12 +135,15 @@ namespace Astronomy
 
         public BetterStar()
         {
-            foreach (string item in variables)
-            {
-                WhatIKnow.Add(item, false);
-                WhatTheyAre.Add(item, double.NaN);
-            }
             SunStuffs();
+            Radius = double.NaN;
+            Temperature = double.NaN;
+            Luminosity = double.NaN;
+            AbsoluteMagnitude = double.NaN;
+            ApparentMagnitude = double.NaN;
+            MagnitudeRatio = double.NaN;
+            Brightness = double.NaN;
+
         }
 
         private void SunStuffs()
@@ -182,49 +154,53 @@ namespace Astronomy
             {
                 SunValues.Add(variables[i], sunData[i]);
             }
+
+
         }
 
         private void ToConsole()
         {
-            foreach (KeyValuePair<string, double> pair in WhatTheyAre)
-            {
-                Console.WriteLine(pair.Key + ": " + pair.Value);
-            }
+            Console.WriteLine(Spatial.ToString());
+            Console.WriteLine(ToString());
         }
-            
+
+        public override string ToString()
+        {
+            string final = "Stellar measurements: \n";
+            final = final + "radius: " + Radius + "\n";
+            final = final + "temperature: " + Temperature + "\n";
+            final = final + "luminosity: " + Luminosity + "\n";
+            final = final + "absolute magnitude: " + AbsoluteMagnitude + "\n";
+            final = final + "apparent magnitude: " + ApparentMagnitude + "\n";
+            final = final + "abs/app Magnitude ratio: " + MagnitudeRatio + "\n";
+            final = final + "brightness: " + Brightness + "\n";
+            return final;
+        }
 
         public void FindOtherValues()
         {
+            Spatial.FindOthers();
             double sigma = 0.00000000567;
             bool didSomething = true;
             while (didSomething)
             {
-                //Console.Clear();
-                //ToConsole();
 
                 didSomething = false;
-                if (!WhatIKnow["arcseconds"])
+
+                
+
+                if (double.IsNaN(Radius))
                 {
-                    if (WhatIKnow["parsecs"])
-                    {
-                        ArcSeconds = 1 / Parsecs;
-                        didSomething = true;
-                        continue;
-                    }
-                    
-                }
-                if (!WhatIKnow["radius"])
-                {
-                    if (WhatIKnow["luminosity"] && WhatIKnow["temperature"])
+                    if (!double.IsNaN(Luminosity) && !double.IsNaN(Temperature))
                     {
                         Radius = Math.Sqrt(Luminosity / (Math.Pow(Temperature, 4) * 4 * Math.PI * sigma));
                         didSomething = true;
                         continue;
                     }
                 }
-                if (!WhatIKnow["temperature"])
+                if (double.IsNaN(Temperature))
                 {
-                    if (WhatIKnow["luminosity"] && WhatIKnow["radius"])
+                    if (!double.IsNaN(Luminosity) && !double.IsNaN(Radius))
                     {
                         Temperature = Math.Pow((Luminosity / (4 * Math.PI * Radius * Radius * sigma)), .25);
                         didSomething = true;
@@ -232,199 +208,203 @@ namespace Astronomy
                     }
 
                 }
-                if (!WhatIKnow["lightyears"])
+                //if (double.IsNaN(Lightyears))
+                //{
+                //    if (!double.IsNaN(Parsecs))
+                //    {
+                //        Lightyears = Parsecs * 3.26156;
+                //        didSomething = true;
+                //        continue;
+                //    }
+                //}
+                //if (double.IsNaN(Parsecs))
+                //{
+                //    if (!double.IsNaN(Lightyears))
+                //    {
+                //        Parsecs = Lightyears * 0.306601;
+                //        didSomething = true;
+                //        continue;
+                //    }
+                //    if (!double.IsNaN(ArcSeconds))
+                //    {
+                //        Parsecs = 1 / ArcSeconds;
+                //        didSomething = true;
+                //        continue;
+                //    }
+                //}
+                if (double.IsNaN(Luminosity))
                 {
-                    if (WhatIKnow["parsecs"])
-                    {
-                        Lightyears = Parsecs * 3.26156;
-                        didSomething = true;
-                        continue;
-                    }
-                }
-                if (!WhatIKnow["parsecs"])
-                {
-                    if (WhatIKnow["lightyears"])
-                    {
-                        Parsecs = Lightyears * 0.306601;
-                        didSomething = true;
-                        continue;
-                    }
-                    if (WhatIKnow["arcseconds"])
-                    {
-                        Parsecs = 1 / ArcSeconds;
-                        didSomething = true;
-                        continue;
-                    }
-                }
-                if (!WhatIKnow["luminosity"])
-                {
-                    if (WhatIKnow["radius"] && WhatIKnow["temperature"])
+                    if (!double.IsNaN(Radius) && double.IsNaN(Temperature))
                     {
                         Luminosity = Math.Pow(Radius, 2) * Math.Pow(Temperature, 4) * 4 * Math.PI * sigma;
                         didSomething = true;
                         continue;
                     }
-                    if (WhatIKnow["absolute magnitude"])
+                    if (!double.IsNaN(AbsoluteMagnitude))
                     {
-                        Luminosity = Math.Pow(2.512, (SunValues["absolute magnitude"] - WhatTheyAre["absolute magnitude"])) * SunValues["luminosity"];
+                        Luminosity = Math.Pow(2.512, (SunValues["absolute magnitude"] - AbsoluteMagnitude)) * SunValues["luminosity"];
                         didSomething = true;
                         continue;
                     }
 
                 }
-                if (!WhatIKnow["absolute magnitude"])
+                if (double.IsNaN(AbsoluteMagnitude))
                 {
-                    if (WhatIKnow["apparent magnitude"] && WhatIKnow["parsecs"])
+                    if (!double.IsNaN(ApparentMagnitude) && !double.IsNaN(Spatial.Parsecs))
                     {
-                        AbsoluteMagnitude = -1 * (5 * Math.Log10(Parsecs / 10) - ApparentMagnitude);
+                        AbsoluteMagnitude = -1 * (5 * Math.Log10(Spatial.Parsecs / 10) - ApparentMagnitude);
                         didSomething = true;
                         continue;
                     }
-                    if (WhatIKnow["luminosity"])
+                    if (!double.IsNaN(Luminosity))
                     {
                         AbsoluteMagnitude = (2.5 * Math.Log10(Luminosity / SunValues["luminosity"])) + SunValues["absolute magnitude"];
                         didSomething = true;
                         continue;
                     }
                 }
-                if (!WhatIKnow["apparent magnitude"])
+                if (double.IsNaN(ApparentMagnitude))
                 {
-                    if (WhatIKnow["luminosity"])
+                    if (!double.IsNaN(Luminosity))
                     {
                         ApparentMagnitude = (2.5 * Math.Log10(Luminosity / SunValues["luminosity"])) + SunValues["apparent magnitude"];
                         didSomething = true;
                         continue;
                     }
-                    if (WhatIKnow["absolute magnitude"] && WhatIKnow["parsecs"])
+                    if (!double.IsNaN(AbsoluteMagnitude)&& !double.IsNaN(Spatial.Parsecs))
                     {
-                        ApparentMagnitude = (5 * Math.Log10(Parsecs / 10)) + AbsoluteMagnitude;
+                        ApparentMagnitude = (5 * Math.Log10(Spatial.Parsecs / 10)) + AbsoluteMagnitude;
                         didSomething = true;
                         continue;
                     }
                 }
-                if (!WhatIKnow["redshift"])
-                {
-                    if (WhatIKnow["regressional velocity"])
-                    {
-                        Redshift = RegressionalVelocity / 299800000;
-                        didSomething = true;
-                        continue;
-                    }
-                }
-                if (!WhatIKnow["regressional velocity"])
-                {
-                    if (WhatIKnow["redshift"])
-                    {
-                        RegressionalVelocity = Redshift * 299800000;
-                        didSomething = true;
-                        continue;
-                    }
-                }
+                //if (double.IsNaN(Redshift))
+                //{
+                //    if (!double.IsNaN(Spatial.RegressionalVelocity))
+                //    {
+                //        Redshift = Spatial.RegressionalVelocity / 299800000;
+                //        didSomething = true;
+                //        continue;
+                //    }
+                //}
+                
+
+                
             }
             ToConsole();
         }
-
-
-
+        
         // Brightness equals Luminosity divided by four pi Distance^2
         private double LumToBrightness()
         {
-            return (Luminosity / (4 * Math.PI * Math.Pow((Lightyears * 9460730800000), 2)));
+            
+            return (Luminosity / (4 * Math.PI * Math.Pow((Spatial.Lightyears * 9460730800000), 2)));
         }
 
 
+
         public double Brightness
+        { get; set; }
+
+        public double MagnitudeRatio
+        { get; set; }
+
+        public double ApparentMagnitude
+        { get; set; }
+
+        public double AbsoluteMagnitude
+        { get; set; }
+
+        public double Luminosity
+        { get; set; }
+
+        public double Temperature
+        { get; set; }
+
+        public double Radius
+        { get; set;
+        }
+
+    }
+
+    class SpatialMeasurements
+    {
+        public SpatialMeasurements()
         {
-            get { return WhatTheyAre["brightness"]; }
-            set { WhatTheyAre["brightness"] = value; WhatIKnow["brightness"] = true;  }
+            RegressionalVelocity = double.NaN;
+            ArcSeconds = double.NaN;
+            Parsecs = double.NaN;
+            Redshift = double.NaN;
+        }
+
+        public override string ToString()
+        {
+            string final = "Spatial measurements: \n";
+            final = final + "regressional velocity: " + RegressionalVelocity + "\n";
+            final = final + "Arc seconds: " + ArcSeconds + "\n";
+            final = final + "Arc minutes: " + ArcMinutes + "\n";
+            final = final + "Parsecs: " + Parsecs + "\n";
+            final = final + "Light-years: " + Lightyears + "\n";
+            final = final + "Redshift: " + Redshift + "\n";
+
+            return final;
+        }
+
+        public void FindOthers()
+        {
+            if (double.IsNaN(RegressionalVelocity))
+            {
+                RegressionalVelocity = Redshift * 299800000;
+            }
+            if (double.IsNaN(Redshift))
+            {
+                Redshift = RegressionalVelocity / 299800000;
+            }
+            if (double.IsNaN(ArcSeconds))
+            {
+                ArcSeconds = 1 / Parsecs;
+            }
+            if (double.IsNaN(Parsecs))
+            {
+                Parsecs = 1 / ArcSeconds;
+            }
+
         }
 
         public double RegressionalVelocity
         {
-            get { return WhatTheyAre["regressional velocity"]; }
-            set { WhatTheyAre["regressional velocity"] = value; WhatIKnow["regressional velocity"] = true;  }
+            get;
+            set;
         }
-
-        public double Redshift
-        {
-            get { return WhatTheyAre["redshift"]; }
-            set { WhatTheyAre["redshift"] = value; WhatIKnow["redshift"] = true;  }
-        }
-
-        public double MagnitudeRatio
-        {
-            get { return WhatTheyAre["abs/app Magnitude ratio"]; }
-            set { WhatTheyAre["abs/app Magnitude ratio"] = value; WhatIKnow["abs/app Magnitude ratio"] = true;  }
-        }
-
-        public double ApparentMagnitude
-        {
-            get { return WhatTheyAre["apparent magnitude"]; }
-            set { WhatTheyAre["apparent magnitude"] = value; WhatIKnow["apparent magnitude"] = true;  }
-        }
-
-        public double AbsoluteMagnitude
-        {
-            get { return WhatTheyAre["absolute magnitude"]; }
-            set { WhatTheyAre["absolute magnitude"] = value; WhatIKnow["absolute magnitude"] = true;  }
-        }
-
-        public double Luminosity
-        {
-            get { return WhatTheyAre["luminosity"]; }
-            set { WhatTheyAre["luminosity"] = value; WhatIKnow["luminosity"] = true;  }
-        }
-
-        public double Parsecs
-        {
-            get { return WhatTheyAre["parsecs"]; }
-            set { WhatTheyAre["parsecs"] = value; WhatIKnow["parsecs"] = true;  }
-        }
-
-        public double Lightyears
-        {
-            get { return WhatTheyAre["lightyears"]; }
-            set { WhatTheyAre["lightyears"] = value; WhatIKnow["lightyears"] = true;  }
-        }
-
-        public double Temperature
-        {
-            get { return WhatTheyAre["temperature"]; }
-            set { WhatTheyAre["temperature"] = value; WhatIKnow["temperature"] = true;  }
-        }
-
-        public double Radius
-        {
-            get { return WhatTheyAre["radius"]; }
-            set { WhatTheyAre["radius"] = value; WhatIKnow["radius"] = true;  }
-        }
-
         public double ArcSeconds
         {
-            get
-            {
-                return this.WhatTheyAre["arcseconds"];
-            }
-            set
-            {
-                this.WhatTheyAre["arcseconds"] = value;
-                this.WhatIKnow["arcseconds"] = true;
-                this.WhatTheyAre["arcminutes"] = value / 60;
-                this.WhatIKnow["arcminutes"] = true;
-                
-            }
+            get;
+            set;
         }
 
         public double ArcMinutes
         {
-            get
-            {
-                return this.WhatTheyAre["arcminutes"];
-            }
-            set
-            {
-                ArcSeconds = value * 60;
-            }
-        } // Done, calls the Arcseconds thing
+            get { return ArcSeconds * 60; }
+            set { ArcSeconds = value / 60; }
+        }
+        public double Parsecs
+        { get; set; }
+
+        public double Lightyears
+        { get { return Parsecs * 3.26156; } set { Parsecs = value / 3.26156; } }
+        public double Redshift
+        { get; set; }
+
+    }
+}
+
+namespace MyExtensions
+{
+    static class Extensions
+    {
+        public static bool IsNaN(this double x)
+        {
+            return (x == double.NaN);
+        }
     }
 }

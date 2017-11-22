@@ -1,0 +1,1 @@
+﻿Name	arcseconds	arcminutes	radius	temperature	lightyears	parsecs	luminosity	absoluteMagnitude	apparentMagnitude	abs/appMagnitudeRatio
