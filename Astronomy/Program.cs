@@ -6,8 +6,32 @@ using System.Threading.Tasks;
 
 namespace Astronomy
 {
+    public enum Measurement { masses, distances, times };
+
     class Program
     {
+        public struct UnitConversion
+        {
+            private string name;
+            private double conversion;
+            public UnitConversion(string name, double conversionToSIStandard)
+            {
+                this.name = name;
+                this.conversion = conversionToSIStandard;
+            }
+
+            public string GetName() { return name; }
+
+            public double ToStandard(double given) { return given * conversion; }
+
+        }
+
+        public static UnitConversion[] masses = new UnitConversion[]{ new UnitConversion("kg", 1), new UnitConversion("solar mass", (1.98855 * Math.Pow(10, 30))) };
+        public static UnitConversion[] distances = { new UnitConversion("meter", 1), new UnitConversion("kilometers", 1000), new UnitConversion("Parsecs", (3.08567782 * Math.Pow(10, 16))),
+            new UnitConversion("lightyear", (9.46073047258 * Math.Pow(10, 15))), new UnitConversion("AU", (1.495978707 * Math.Pow(10, 11))), new UnitConversion("miles", 1.60938),
+            new UnitConversion("lightsecond", 299792458)};
+        public static UnitConversion[] times = { new UnitConversion("seconds", 1), new UnitConversion("minutes", 60), new UnitConversion("hours", 3600), new UnitConversion("days", 86400),
+            new UnitConversion("week", 604800), new UnitConversion("year", 31556952)};
         static void Main(string[] args)
         {
             Console.WriteLine("Welcome to the Astronomy app! How may I help you?");
@@ -107,12 +131,140 @@ namespace Astronomy
             Console.WriteLine("Y'all ready for this?");
 
             star.FindOtherValues();
+            star.ToConsole();
         }
 
+        static void SatelliteOrbitingSomething()
+        {
+            Satellite satellite = new Satellite();
+            string input = "";
+            int valueIndex;
+            int unitIndex;
+            double value;
+            string[] objectInformation = {"", "mass of satellite", "mass of object satellite is orbitting", "semi-major axis", "semi-minor axis",
+                "eccentricity", "orbital period", "appehelion", "parahelion", "distance between focci" };
+            Measurement local;
+
+            while (input.ToLower() != "done")
+            {
+                Console.WriteLine("What do you know about this object?");
+                for (int i = 1; i < objectInformation.Length; i++)
+                    Console.WriteLine(i + ": " + objectInformation[i]);
+
+                valueIndex = FindIndex(objectInformation.Length);
+
+                if (valueIndex == 5)
+                    continue;
+                else if (valueIndex == 6)
+                    local = Measurement.times;
+                else if (valueIndex == 1 || valueIndex == 2)
+                    local = Measurement.masses;
+                else
+                    local = Measurement.distances;
+
+                UnitConversion whatWeUse = FindUnitValue(local);
+
+                Console.WriteLine("Okay! What's the value?");
+                while (!double.TryParse(Console.ReadLine(), out value))
+                {
+                    Console.WriteLine("I'm sorry but that was terrible. You included a letter somewhere. Try again.");
+                }
+
+
+            }
+
+
+
+        }
+
+        static UnitConversion FindUnitValue(Measurement local)
+        {
+            switch (local)
+            {
+                case Measurement.masses:
+                    Console.WriteLine("Okay, what unit are you going for?");
+                    for (int a = 0; a < 2; a++)
+                    {
+                        Console.WriteLine(a + ": " + masses[a].GetName());
+                    }
+                    return masses[FindIndex(2)];
+                case Measurement.distances:
+                    Console.WriteLine("Okay, what unit are you going for?");
+                    for (int a = 0; a < 7; a++)
+                    {
+                        Console.WriteLine(a + ": " + distances[a].GetName());
+                    }
+                    return masses[FindIndex(7)];
+                case Measurement.times:
+                    Console.WriteLine("Okay, what unit are you going for?");
+                    for (int a = 0; a < 6; a++)
+                    {
+                        Console.WriteLine(a + ": " + times[a].GetName());
+                    }
+                    return masses[FindIndex(6)];
+                default
+                    return new UnitConversion("real number", 1);
+            }
+
+        }
+        static int FindIndex(int maximum)
+        {
+            int index;
+            try
+            {
+                index = int.Parse(Console.ReadLine());
+            }
+            catch (FormatException)
+            {
+                Console.WriteLine("That was terrible, you entered a word when we specifically asked for an integer. Try again.");
+                index = FindIndex(maximum);
+            }
+
+            if (index < maximum)
+                return index;
+            else
+            {
+                Console.WriteLine("That integer was out of range. Try again");
+                return FindIndex(maximum);
+            }
+        }
+
+    public class Satellite
+    {
+        /* Things about a satellite I can know:
+         * Mass of satellite (kg)
+         * Mass of object satellite is orbitting (kg)
+         * semi-major axis (meter)
+         * semi-minor axis (meter)
+         * eccentricity (just a value)
+         * orbital period (seconds)
+         * Appehelion (meter)
+         * Parahelion (meter)
+         * Distance to the second focci at
+         *      Appehelion
+         *      Parahelion
+         * 
+         *
+         */
+        
+        public Satellite()
+        {
+
+        }
+
+        
+
+        #region Values
+
+        public double Mass { get; set; } // in kg
+            
+        public double MassOfCenter { get; set; }
+        
+        #endregion
 
     }
 
-    class BetterStar
+    public class BetterStar
     {
 
         private Dictionary<string, double> SunValues = new Dictionary<string, double>();
@@ -143,7 +295,7 @@ namespace Astronomy
             ApparentMagnitude = double.NaN;
             MagnitudeRatio = double.NaN;
             Brightness = double.NaN;
-
+            
         }
 
         private void SunStuffs()
@@ -158,7 +310,7 @@ namespace Astronomy
 
         }
 
-        private void ToConsole()
+        public void ToConsole()
         {
             Console.WriteLine(Spatial.ToString());
             Console.WriteLine(ToString());
@@ -184,11 +336,8 @@ namespace Astronomy
             bool didSomething = true;
             while (didSomething)
             {
-
                 didSomething = false;
-
                 
-
                 if (double.IsNaN(Radius))
                 {
                     if (!double.IsNaN(Luminosity) && !double.IsNaN(Temperature))
@@ -208,30 +357,7 @@ namespace Astronomy
                     }
 
                 }
-                //if (double.IsNaN(Lightyears))
-                //{
-                //    if (!double.IsNaN(Parsecs))
-                //    {
-                //        Lightyears = Parsecs * 3.26156;
-                //        didSomething = true;
-                //        continue;
-                //    }
-                //}
-                //if (double.IsNaN(Parsecs))
-                //{
-                //    if (!double.IsNaN(Lightyears))
-                //    {
-                //        Parsecs = Lightyears * 0.306601;
-                //        didSomething = true;
-                //        continue;
-                //    }
-                //    if (!double.IsNaN(ArcSeconds))
-                //    {
-                //        Parsecs = 1 / ArcSeconds;
-                //        didSomething = true;
-                //        continue;
-                //    }
-                //}
+                
                 if (double.IsNaN(Luminosity))
                 {
                     if (!double.IsNaN(Radius) && double.IsNaN(Temperature))
@@ -265,33 +391,25 @@ namespace Astronomy
                 }
                 if (double.IsNaN(ApparentMagnitude))
                 {
-                    if (!double.IsNaN(Luminosity))
-                    {
-                        ApparentMagnitude = (2.5 * Math.Log10(Luminosity / SunValues["luminosity"])) + SunValues["apparent magnitude"];
-                        didSomething = true;
-                        continue;
-                    }
+                    //if (!double.IsNaN(Luminosity))
+                    //{
+                    //    ApparentMagnitude = (2.5 * Math.Log10(Luminosity / SunValues["luminosity"])) + SunValues["apparent magnitude"];
+                    //    didSomething = true;
+                    //    continue;
+                    //}
                     if (!double.IsNaN(AbsoluteMagnitude)&& !double.IsNaN(Spatial.Parsecs))
                     {
-                        ApparentMagnitude = (5 * Math.Log10(Spatial.Parsecs / 10)) + AbsoluteMagnitude;
+                        ApparentMagnitude = (5 * Math.Log10(Spatial.Parsecs)) - 5 + AbsoluteMagnitude;
                         didSomething = true;
                         continue;
                     }
                 }
-                //if (double.IsNaN(Redshift))
-                //{
-                //    if (!double.IsNaN(Spatial.RegressionalVelocity))
-                //    {
-                //        Redshift = Spatial.RegressionalVelocity / 299800000;
-                //        didSomething = true;
-                //        continue;
-                //    }
-                //}
-                
-
+                if (double.IsNaN(Spatial.Parsecs))
+                {
+                    Spatial.Parsecs = Math.Pow(10, (((ApparentMagnitude - AbsoluteMagnitude) / 5) + 1));
+                }
                 
             }
-            ToConsole();
         }
         
         // Brightness equals Luminosity divided by four pi Distance^2
@@ -301,8 +419,7 @@ namespace Astronomy
             return (Luminosity / (4 * Math.PI * Math.Pow((Spatial.Lightyears * 9460730800000), 2)));
         }
 
-
-
+        #region values
         public double Brightness
         { get; set; }
 
@@ -324,10 +441,11 @@ namespace Astronomy
         public double Radius
         { get; set;
         }
+        #endregion
 
     }
 
-    class SpatialMeasurements
+    public class SpatialMeasurements
     {
         public SpatialMeasurements()
         {
@@ -396,9 +514,9 @@ namespace Astronomy
         { get; set; }
 
     }
-}
+    }
 
-namespace MyExtensions
+    namespace MyExtensions
 {
     static class Extensions
     {
@@ -407,4 +525,5 @@ namespace MyExtensions
             return (x == double.NaN);
         }
     }
+}
 }
