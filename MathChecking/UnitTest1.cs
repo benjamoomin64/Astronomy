@@ -117,5 +117,20 @@ namespace MathChecking
 
             Assert.IsTrue(MarginOfError(satellite.MassOfCenter, theMoon.MassOfCenter));
         }
+
+        [TestMethod]
+        public void SatelliteTests4()
+        {
+            Satellite satellite = new Satellite();
+            satellite.DistanceBetweenFocci = saturn.DistanceBetweenFocci;
+            satellite.SemiMajorAxis = saturn.SemiMajorAxis;
+
+            satellite.FindOtherValues();
+            SatelliteToDebug(satellite);
+
+            Assert.IsTrue(MarginOfError(satellite.Eccentricity, saturn.Eccentricity));
+            Assert.IsTrue(MarginOfError(satellite.Aphelion, saturn.Aphelion));
+            Assert.IsTrue(MarginOfError(satellite.Perihelion, saturn.Perihelion));
+        }
     }
 }

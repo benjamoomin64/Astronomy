@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Astronomy
 {
-    public enum Measurement { deFault, masses, distances, times };
+    public enum Measurement { deFault, masses, distances, times, parallax, temperature, luminosity };
     public struct UnitConversion
     {
         private string name;
@@ -32,6 +32,9 @@ namespace Astronomy
             new UnitConversion("lightsecond", 299792458)};
         public static UnitConversion[] times = { new UnitConversion("seconds", 1), new UnitConversion("minutes", 60), new UnitConversion("hours", 3600), new UnitConversion("days", 86400),
             new UnitConversion("week", 604800), new UnitConversion("year", 31556952)};
+        public static UnitConversion[] parallax = { new UnitConversion("arcseconds", 1), new UnitConversion("arcminutes", 60), new UnitConversion("milliarcseconds", 0.001) };
+        public static UnitConversion[] luminosity = { new UnitConversion("watts", 1), new UnitConversion("solar luminosity", (3.828 * Math.Pow(10, 26))) };
+        
 
         static void Main(string[] args)
         {
@@ -57,25 +60,41 @@ namespace Astronomy
             {
                 case Measurement.masses:
                     Console.WriteLine("Okay, what unit are you going for?");
-                    for (int a = 0; a < 3; a++)
+                    for (int a = 0; a < masses.Length; a++)
                     {
                         Console.WriteLine(a + ": " + masses[a].GetName());
                     }
-                    return masses[FindIndex(3)];
+                    return masses[FindIndex(masses.Length)];
                 case Measurement.distances:
                     Console.WriteLine("Okay, what unit are you going for?");
-                    for (int a = 0; a < 7; a++)
+                    for (int a = 0; a < distances.Length; a++)
                     {
                         Console.WriteLine(a + ": " + distances[a].GetName());
                     }
-                    return distances[FindIndex(7)];
+                    return distances[FindIndex(distances.Length)];
                 case Measurement.times:
                     Console.WriteLine("Okay, what unit are you going for?");
-                    for (int a = 0; a < 6; a++)
+                    for (int a = 0; a < times.Length; a++)
                     {
                         Console.WriteLine(a + ": " + times[a].GetName());
                     }
-                    return times[FindIndex(6)];
+                    return times[FindIndex(times.Length)];
+                case Measurement.parallax:
+                    Console.WriteLine("Okay, what unit are you going for?");
+                    for (int a = 0; a < parallax.Length; a++)
+                    {
+                        Console.WriteLine(a + ": " + parallax[a].GetName());
+                    }
+                    return parallax[FindIndex(parallax.Length)];
+                case Measurement.luminosity:
+                    Console.WriteLine("Okay, what unit are you going for?");
+                    for (int a = 0; a < luminosity.Length; a++)
+                    {
+                        Console.WriteLine(a + ": " + luminosity[a].GetName());
+                    }
+                    return luminosity[FindIndex(luminosity.Length)];
+                case Measurement.temperature:
+                    return new UnitConversion("Kelvin", 1);
                 default:
                     return new UnitConversion("real number", 1);
             }
@@ -113,25 +132,35 @@ namespace Astronomy
             string input = "";
             int index = 110;
             double value;
+            Measurement local;
+            string[] variables = new string[]{ "", "parallax", "radius", "temperature", "distance", "luminosity",
+                "absolute magnitude", "apparent magnitude", "abs/app Magnitude ratio", "redshift", "regressional velocity"};
             
             while (input.ToLower() != "done")
             {
                 Console.WriteLine("What values do you know?");
-                for (int i = 1; i <= star.variables.Length; i++)
+                for (int i = 1; i < variables.Length; i++)
                 {
-                    Console.WriteLine(i + ": " + star.variables[i - 1]);
+                    Console.WriteLine(i + ": " + variables[i]);
                 }
 
-                while (index > star.variables.Length)
-                {
-                    while (!int.TryParse(Console.ReadLine(), out index))
-                    {
-                        Console.WriteLine("I'm sorry that was not an integer value, can you please try again?");
-                    }
-                    if (index > star.variables.Length)
-                        Console.WriteLine("I'm sorry but that value was outside the bounds of your options. Try again?");
-                }
-                Console.WriteLine("Excelent! So you're trying to input " + star.variables[index - 1] + ". What's the value?");
+
+                index = FindIndex(variables.Length);
+
+                if (index == 1)
+                    local = Measurement.parallax;
+                else if (index == 5)
+                    local = Measurement.luminosity;
+                else if (index == 4 || index == 2)
+                    local = Measurement.distances;
+                else if (index == 3)
+                    local = Measurement.temperature;
+                else
+                    local = Measurement.deFault;
+                UnitConversion whatWeUse = FindUnitValue(local);
+
+
+                Console.WriteLine("Excelent! So you're trying to input " + variables[index] + " in " + whatWeUse.GetName() + ". What's the value?");
 
                 while (!double.TryParse(Console.ReadLine(), out value))
                 {
@@ -141,41 +170,35 @@ namespace Astronomy
                 switch (index)
                 {
                     case 1:
-                        star.Spatial.ArcSeconds = value;
+                        star.Spatial.Parallax = whatWeUse.ToStandard(value);
                         break;
                     case 2:
-                        star.Spatial.ArcMinutes = value;
+                        star.Radius = whatWeUse.ToStandard(value);
                         break;
                     case 3:
-                        star.Radius = value;
+                        star.Temperature = whatWeUse.ToStandard(value);
                         break;
                     case 4:
-                        star.Temperature = value;
+                        star.Spatial.Distance = whatWeUse.ToStandard(value);
                         break;
                     case 5:
-                        star.Spatial.Lightyears = value;
+                        star.Luminosity = whatWeUse.ToStandard(value);
                         break;
                     case 6:
-                        star.Spatial.Parsecs = value;
+                        star.AbsoluteMagnitude = whatWeUse.ToStandard(value);
                         break;
                     case 7:
-                        star.Luminosity = value;
+                        star.ApparentMagnitude = whatWeUse.ToStandard(value);
                         break;
                     case 8:
-                        star.AbsoluteMagnitude = value;
+                        star.MagnitudeRatio = whatWeUse.ToStandard(value);
                         break;
                     case 9:
-                        star.ApparentMagnitude = value;
+                        star.Spatial.Redshift = whatWeUse.ToStandard(value);
                         break;
                     case 10:
-                        throw new NotImplementedException("You lazy bum you didn't do this bit yet");
-                    case 11:
-                        star.Spatial.Redshift = value;
+                        star.Spatial.RegressionalVelocity = whatWeUse.ToStandard(value);
                         break;
-                    case 12:
-                        star.Spatial.RegressionalVelocity = value;
-                        break;
-
                 }
                 Console.WriteLine("Sweet. Data logged. Are you done inputting values?");
                 input = Console.ReadLine();
@@ -205,6 +228,7 @@ namespace Astronomy
                     Console.WriteLine(i + ": " + objectInformation[i]);
 
                 valueIndex = FindIndex(objectInformation.Length);
+
                 if (valueIndex == 5)
                     local = Measurement.deFault;
                 else if (valueIndex == 6)
@@ -264,7 +288,18 @@ namespace Astronomy
             Console.Clear();
             Console.WriteLine(satellite.ToString());
         }
+
+        public static string AllUnits(UnitConversion[] units, double baseValue)
+        {
+            string added = "";
+            foreach (UnitConversion unit in units)
+            {
+                added = added + "\t" + unit.GetName() + ": " + (unit.FromStandard(baseValue)) + "\n";
+            }
+            return added;
+        }
     }
+    
 
     public class Satellite
     {
@@ -309,6 +344,8 @@ namespace Astronomy
             OrbitalPeriod = orbitalPeriod;
             Aphelion = aphelion;
             Perihelion = perihelion;
+            DistanceBetweenFocci = double.NaN;
+            SemiMinorAxis = double.NaN;
             CalculateSemiMinorAxis();
             CalculateDistanceBetweenFocci();
         }
@@ -473,35 +510,26 @@ namespace Astronomy
         {
             string output = "";
             output = output + "Mass: \n";
-            output = output + AllUnits(Program.masses, Mass);
+            output = output + Program.AllUnits(Program.masses, Mass);
             output = output + "Mass of object being orbitted: \n";
-            output = output + AllUnits(Program.masses, MassOfCenter);
+            output = output + Program.AllUnits(Program.masses, MassOfCenter);
             output = output + "Semi-major Axis: \n";
-            output = output + AllUnits(Program.distances, SemiMajorAxis);
+            output = output + Program.AllUnits(Program.distances, SemiMajorAxis);
             output = output + "Semi-minor Axis: \n";
-            output = output + AllUnits(Program.distances, SemiMinorAxis);
+            output = output + Program.AllUnits(Program.distances, SemiMinorAxis);
             output = output + "Eccentricity: " + Eccentricity + "\n";
             output = output + "Orbital Period: \n";
-            output = output + AllUnits(Program.times, OrbitalPeriod);
+            output = output + Program.AllUnits(Program.times, OrbitalPeriod);
             output = output + "Aphelion: \n";
-            output = output + AllUnits(Program.distances, Aphelion);
+            output = output + Program.AllUnits(Program.distances, Aphelion);
             output = output + "Perihelion: \n";
-            output = output + AllUnits(Program.distances, Perihelion);
+            output = output + Program.AllUnits(Program.distances, Perihelion);
             output = output + "Distance between focci: \n";
-            output = output + AllUnits(Program.distances, DistanceBetweenFocci);
+            output = output + Program.AllUnits(Program.distances, DistanceBetweenFocci);
 
             return output;
         }
 
-        private string AllUnits(UnitConversion[] units, double baseValue)
-        {
-            string added = "";
-            foreach (UnitConversion unit in units)
-            {
-                added = added + "\t" + unit.GetName() + ": " + (unit.FromStandard(baseValue)) + "\n";
-            }
-            return added;
-        }
 
         #region Values
 
@@ -529,7 +557,6 @@ namespace Astronomy
 
     public class BetterStar
     {
-
         private Dictionary<string, double> SunValues = new Dictionary<string, double>();
         public SpatialMeasurements Spatial = new SpatialMeasurements();
         /* Things about a star I can know:
@@ -546,7 +573,7 @@ namespace Astronomy
          */
 
         public string[] variables = new string[]{ "arcseconds", "arcminutes", "radius", "temperature", "lightyears", "parsecs", "luminosity",
-            "absolute magnitude", "apparent magnitude", "abs/app Magnitude ratio", "redshift", "regressional velocity", "brightness"};
+            "absolute magnitude", "apparent magnitude", "abs/app Magnitude ratio", "redshift", "regressional velocity"};
 
         public BetterStar()
         {
@@ -557,7 +584,6 @@ namespace Astronomy
             AbsoluteMagnitude = double.NaN;
             ApparentMagnitude = double.NaN;
             MagnitudeRatio = double.NaN;
-            Brightness = double.NaN;
 
         }
 
@@ -573,8 +599,6 @@ namespace Astronomy
 
         }
 
-
-
         public void ToConsole()
         {
             Console.WriteLine(Spatial.ToString());
@@ -583,15 +607,19 @@ namespace Astronomy
 
         public override string ToString()
         {
-            string final = "Stellar measurements: \n";
-            final = final + "radius: " + Radius + "\n";
-            final = final + "temperature: " + Temperature + "\n";
-            final = final + "luminosity: " + Luminosity + "\n";
-            final = final + "absolute magnitude: " + AbsoluteMagnitude + "\n";
-            final = final + "apparent magnitude: " + ApparentMagnitude + "\n";
-            final = final + "abs/app Magnitude ratio: " + MagnitudeRatio + "\n";
-            final = final + "brightness: " + Brightness + "\n";
-            return final;
+            string output = "Stellar measurements: \n";
+
+            output = output + "Radius: \n";
+            output = output + Program.AllUnits(Program.distances, Radius);
+            output = output + "Temperature: " + Temperature + "\n";
+            output = output + "Luminosity: \n";
+            output = output + Program.AllUnits(Program.luminosity, Luminosity);
+            output = output + "Absolute Magnitude: " + AbsoluteMagnitude + " \n";
+            output = output + "Apparent Magnitude: " + ApparentMagnitude + "\n";
+            output = output + "Absolute/Apparent Magnitude Ratio: " + MagnitudeRatio + "\n";
+
+            
+            return output;
         }
 
         public void FindOtherValues()
@@ -640,9 +668,9 @@ namespace Astronomy
                 }
                 if (double.IsNaN(AbsoluteMagnitude))
                 {
-                    if (!double.IsNaN(ApparentMagnitude) && !double.IsNaN(Spatial.Parsecs))
+                    if (!double.IsNaN(ApparentMagnitude) && !double.IsNaN(Spatial.Distance))
                     {
-                        AbsoluteMagnitude = -1 * (5 * Math.Log10(Spatial.Parsecs / 10) - ApparentMagnitude);
+                        AbsoluteMagnitude = -1 * (5 * Math.Log10(Program.distances[2].FromStandard(Spatial.Distance) / 10) - ApparentMagnitude);
                         didSomething = true;
                         continue;
                     }
@@ -661,31 +689,23 @@ namespace Astronomy
                     //    didSomething = true;
                     //    continue;
                     //}
-                    if (!double.IsNaN(AbsoluteMagnitude) && !double.IsNaN(Spatial.Parsecs))
+                    if (!double.IsNaN(AbsoluteMagnitude) && !double.IsNaN(Spatial.Distance))
                     {
-                        ApparentMagnitude = (5 * Math.Log10(Spatial.Parsecs)) - 5 + AbsoluteMagnitude;
+                        ApparentMagnitude = (5 * Math.Log10(Program.distances[2].FromStandard(Spatial.Distance))) - 5 + AbsoluteMagnitude;
                         didSomething = true;
                         continue;
                     }
                 }
-                if (double.IsNaN(Spatial.Parsecs))
+                if (double.IsNaN(Spatial.Distance))
                 {
-                    Spatial.Parsecs = Math.Pow(10, (((ApparentMagnitude - AbsoluteMagnitude) / 5) + 1));
+                    Spatial.Distance = Math.Pow(10, (((ApparentMagnitude - AbsoluteMagnitude) / 5) + 1));
                 }
 
             }
         }
-
-        // Brightness equals Luminosity divided by four pi Distance^2
-        private double LumToBrightness()
-        {
-
-            return (Luminosity / (4 * Math.PI * Math.Pow((Spatial.Lightyears * 9460730800000), 2)));
-        }
+        
 
         #region values
-        public double Brightness
-        { get; set; }
 
         public double MagnitudeRatio
         { get; set; }
@@ -715,22 +735,21 @@ namespace Astronomy
         public SpatialMeasurements()
         {
             RegressionalVelocity = double.NaN;
-            ArcSeconds = double.NaN;
-            Parsecs = double.NaN;
+            Distance = double.NaN;
+            Parallax = double.NaN;
             Redshift = double.NaN;
         }
 
         public override string ToString()
         {
-            string final = "Spatial measurements: \n";
-            final = final + "regressional velocity: " + RegressionalVelocity + "\n";
-            final = final + "Arc seconds: " + ArcSeconds + "\n";
-            final = final + "Arc minutes: " + ArcMinutes + "\n";
-            final = final + "Parsecs: " + Parsecs + "\n";
-            final = final + "Light-years: " + Lightyears + "\n";
-            final = final + "Redshift: " + Redshift + "\n";
-
-            return final;
+            string output = "";
+            output = output + "Parallax: \n";
+            output = output + Program.AllUnits(Program.parallax, Parallax);
+            output = output + "Redshift: " + Redshift + "\n";
+            output = output + "Regressional velocity: " + RegressionalVelocity + "\n";
+            output = output + "Distance: \n";
+            output = output + Program.AllUnits(Program.distances, Distance);
+            return output;
         }
 
         public void FindOthers()
@@ -743,13 +762,13 @@ namespace Astronomy
             {
                 Redshift = RegressionalVelocity / 299800000;
             }
-            if (double.IsNaN(ArcSeconds))
+            if (double.IsNaN(Parallax))
             {
-                ArcSeconds = 1 / Parsecs;
+                Parallax = 1 / (Distance / (3.08567782 * Math.Pow(10, 16)));
             }
-            if (double.IsNaN(Parsecs))
+            if (double.IsNaN(Distance))
             {
-                Parsecs = 1 / ArcSeconds;
+                Distance = (1 / Parallax) * (3.08567782 * Math.Pow(10, 16));
             }
 
         }
@@ -759,28 +778,23 @@ namespace Astronomy
             get;
             set;
         }
-        public double ArcSeconds
+        public double Parallax
         {
             get;
             set;
         }
-
-        public double ArcMinutes
-        {
-            get { return ArcSeconds * 60; }
-            set { ArcSeconds = value / 60; }
-        }
-        public double Parsecs
+        
+        public double Distance
         { get; set; }
-
-        public double Lightyears
-        { get { return Parsecs * 3.26156; } set { Parsecs = value / 3.26156; } }
+        
         public double Redshift
         { get; set; }
 
     }
 
-    namespace MyExtensions
+}
+
+namespace MyExtensions
 {
     static class Extensions
     {
@@ -789,5 +803,4 @@ namespace Astronomy
             return (x == double.NaN);
         }
     }
-}
 }
