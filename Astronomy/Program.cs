@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Astronomy;
+using MyExtensions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -22,6 +24,7 @@ namespace Astronomy
         public double ToStandard(double given) { return given * conversion; }
 
         public double FromStandard(double given) { return given / conversion; }
+        
 
     }
     class Program
@@ -64,35 +67,35 @@ namespace Astronomy
                     {
                         Console.WriteLine(a + ": " + masses[a].GetName());
                     }
-                    return masses[FindIndex(masses.Length)];
+                    return masses[FindIndex(masses.ToStringArray())];
                 case Measurement.distances:
                     Console.WriteLine("Okay, what unit are you going for?");
                     for (int a = 0; a < distances.Length; a++)
                     {
                         Console.WriteLine(a + ": " + distances[a].GetName());
                     }
-                    return distances[FindIndex(distances.Length)];
+                    return distances[FindIndex(distances.ToStringArray())];
                 case Measurement.times:
                     Console.WriteLine("Okay, what unit are you going for?");
                     for (int a = 0; a < times.Length; a++)
                     {
                         Console.WriteLine(a + ": " + times[a].GetName());
                     }
-                    return times[FindIndex(times.Length)];
+                    return times[FindIndex(times.ToStringArray())];
                 case Measurement.parallax:
                     Console.WriteLine("Okay, what unit are you going for?");
                     for (int a = 0; a < parallax.Length; a++)
                     {
                         Console.WriteLine(a + ": " + parallax[a].GetName());
                     }
-                    return parallax[FindIndex(parallax.Length)];
+                    return parallax[FindIndex(parallax.ToStringArray())];
                 case Measurement.luminosity:
                     Console.WriteLine("Okay, what unit are you going for?");
                     for (int a = 0; a < luminosity.Length; a++)
                     {
                         Console.WriteLine(a + ": " + luminosity[a].GetName());
                     }
-                    return luminosity[FindIndex(luminosity.Length)];
+                    return luminosity[FindIndex(luminosity.ToStringArray())];
                 case Measurement.temperature:
                     return new UnitConversion("Kelvin", 1);
                 default:
@@ -100,25 +103,34 @@ namespace Astronomy
             }
 
         }
-        static int FindIndex(int maximum)
+        static int FindIndex(string[] items)
         {
-            int index;
+            int index = 0;
+            string input = "";
             try
             {
-                index = int.Parse(Console.ReadLine());
+                input = Console.ReadLine();
+                index = int.Parse(input);
             }
-            catch (FormatException)
+            catch (FormatException) 
             {
-                Console.WriteLine("That was terrible, you entered a word when we specifically asked for an integer. Try again.");
-                index = FindIndex(maximum);
+                try
+                {
+                    index = James.WordSim.QuickCheck(items, input);
+                }
+                catch (Exception)
+                {
+                    Console.Write("That was neither an integer nor an option, please try again.");
+                    return FindIndex(items);
+                }
             }
 
-            if (index < maximum)
+            if (index < items.Length)
                 return index;
             else
             {
                 Console.WriteLine("That integer was out of range. Try again");
-                return FindIndex(maximum);
+                return FindIndex(items);
             }
         }
         static bool KeepGoing(string input)
@@ -145,7 +157,7 @@ namespace Astronomy
                 }
 
 
-                index = FindIndex(variables.Length);
+                index = FindIndex(variables);
 
                 if (index == 1)
                     local = Measurement.parallax;
@@ -227,7 +239,7 @@ namespace Astronomy
                 for (int i = 1; i < objectInformation.Length; i++)
                     Console.WriteLine(i + ": " + objectInformation[i]);
 
-                valueIndex = FindIndex(objectInformation.Length);
+                valueIndex = FindIndex(objectInformation);
 
                 if (valueIndex == 5)
                     local = Measurement.deFault;
@@ -801,6 +813,15 @@ namespace MyExtensions
         public static bool IsNaN(this double x)
         {
             return (x == double.NaN);
+        }
+
+        public static string[] ToStringArray(this UnitConversion[] thing)
+        {
+            List<string> stuff = new List<string>(thing.Length);
+            foreach (UnitConversion a in thing)
+                stuff.Add(a.GetName());
+            stuff.TrimExcess();
+            return stuff.ToArray();
         }
     }
 }
