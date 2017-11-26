@@ -26,8 +26,6 @@ namespace Astronomy
     }
     class Program
     {
-        
-
         public static UnitConversion[] masses = new UnitConversion[]{ new UnitConversion("kg", 1), new UnitConversion("solar mass", (1.98855 * Math.Pow(10, 30))), new UnitConversion("earth mass", (5.97237 * Math.Pow(10, 24))) };
         public static UnitConversion[] distances = { new UnitConversion("meter", 1), new UnitConversion("kilometers", 1000), new UnitConversion("Parsecs", (3.08567782 * Math.Pow(10, 16))),
             new UnitConversion("lightyear", (9.46073047258 * Math.Pow(10, 15))), new UnitConversion("AU", (1.495978707 * Math.Pow(10, 11))), new UnitConversion("miles", 1.60938),
@@ -189,7 +187,7 @@ namespace Astronomy
             star.FindOtherValues();
             star.ToConsole();
         }
-
+        
         static void SatelliteOrbitingSomething()
         {
             Satellite satellite = new Satellite();
@@ -301,107 +299,175 @@ namespace Astronomy
             DistanceBetweenFocci = double.NaN;
         }
 
+        public Satellite(double mass, double massOfCenter, double semiMajorAxis, double eccentricity,
+            double orbitalPeriod, double aphelion, double perihelion)
+        {
+            Mass = mass;
+            MassOfCenter = massOfCenter;
+            SemiMajorAxis = semiMajorAxis;
+            Eccentricity = eccentricity;
+            OrbitalPeriod = orbitalPeriod;
+            Aphelion = aphelion;
+            Perihelion = perihelion;
+            CalculateSemiMinorAxis();
+            CalculateDistanceBetweenFocci();
+        }
+
         public void FindOtherValues()
         {
-            for (int a = 0; a < 4; a++)
+            for (int a = 0; a < 6; a++)
             {
-                if (double.IsNaN(Mass))
+                CalculateMass();
+                CalculateMassOfCenter();
+                CalculateSemiMajorAxis();
+                CalculateSemiMinorAxis();
+                CalculateEccentricity();
+                CalculateDistanceBetweenFocci();
+                CalculateOrbitalPeriod();
+                CalculateAphelion();
+                CalculatePerihelion();
+            }
+        }
+
+        #region CalculateMethods
+        private void CalculateMass()
+        {
+            if (double.IsNaN(Mass))
+            {
+                if (!double.IsNaN(MassOfCenter) && !double.IsNaN(OrbitalPeriod) && !double.IsNaN(SemiMajorAxis))
                 {
-                    if (!double.IsNaN(MassOfCenter) && !double.IsNaN(OrbitalPeriod) && !double.IsNaN(SemiMajorAxis))
-                    {
-                        Mass = (4 * Math.PI * Math.PI * Math.Pow(SemiMajorAxis, 3)) / (gConstant * OrbitalPeriod * OrbitalPeriod) - MassOfCenter;
-                    }
-                }
-                if (double.IsNaN(MassOfCenter))
-                {
-                    if (!double.IsNaN(Mass) && !double.IsNaN(OrbitalPeriod) && !double.IsNaN(SemiMajorAxis))
-                    {
-                        MassOfCenter = (4 * Math.PI * Math.PI * Math.Pow(SemiMajorAxis, 3)) / (gConstant * OrbitalPeriod * OrbitalPeriod) - Mass;
-                    }
-                }
-                if (double.IsNaN(SemiMajorAxis))
-                {
-                    if (!double.IsNaN(Mass) && !double.IsNaN(MassOfCenter) && !double.IsNaN(OrbitalPeriod))
-                    {
-                        SemiMajorAxis = Math.Pow((OrbitalPeriod * OrbitalPeriod * gConstant * (Mass + MassOfCenter)) / (4 * Math.PI * Math.PI), (1 / 3));
-                    }
-                    else if (!double.IsNaN(Eccentricity) && !double.IsNaN(DistanceBetweenFocci))
-                    {
-                        SemiMajorAxis = (DistanceBetweenFocci / 2) / Eccentricity;
-                    }
-                    else if (!double.IsNaN(Aphelion) && !double.IsNaN(Perihelion))
-                    {
-                        SemiMajorAxis = (Aphelion + Perihelion) / 2;
-                    }
-                    else if (!double.IsNaN(Aphelion) && !double.IsNaN(DistanceBetweenFocci))
-                    {
-                        SemiMajorAxis = Aphelion - (DistanceBetweenFocci / 2);
-                    }
-                    else if (!double.IsNaN(Perihelion) && !double.IsNaN(DistanceBetweenFocci))
-                    {
-                        SemiMajorAxis = Perihelion + (DistanceBetweenFocci / 2);
-                    }
-                    else if (!double.IsNaN(SemiMinorAxis) && !double.IsNaN(Eccentricity))
-                    {
-                        SemiMajorAxis = SemiMinorAxis / Math.Sqrt(1 - (Eccentricity * Eccentricity));
-                    }
-                }
-                if (double.IsNaN(SemiMinorAxis))
-                {
-                    if (!double.IsNaN(Eccentricity) && !double.IsNaN(SemiMajorAxis))
-                    {
-                        SemiMinorAxis = SemiMajorAxis * Math.Sqrt(1 - (Eccentricity * Eccentricity));
-                    }
-                }
-                if (double.IsNaN(Eccentricity))
-                {
-                    if (!double.IsNaN(SemiMinorAxis) && !double.IsNaN(SemiMajorAxis))
-                    {
-                        Eccentricity = Math.Sqrt(1 - ((SemiMinorAxis * SemiMinorAxis) / (SemiMajorAxis * SemiMajorAxis)));
-                    }
-                }
-                if (double.IsNaN(DistanceBetweenFocci))
-                {
-                    if (!double.IsNaN(Aphelion) && !double.IsNaN(Perihelion))
-                    {
-                        DistanceBetweenFocci = Aphelion - Perihelion;
-                    }
-                    else if (!double.IsNaN(Eccentricity) && !double.IsNaN(SemiMajorAxis))
-                    {
-                        DistanceBetweenFocci = Eccentricity * (2 * SemiMajorAxis);
-                    }
-                }
-                if (double.IsNaN(OrbitalPeriod))
-                {
-                    if (!double.IsNaN(Mass) && !double.IsNaN(MassOfCenter) && !double.IsNaN(SemiMajorAxis))
-                    {
-                        OrbitalPeriod = Math.Sqrt((4 * Math.PI * Math.PI * Math.Pow(SemiMajorAxis, 3)) / (gConstant * (Mass + MassOfCenter)));
-                    }
-                }
-                if (double.IsNaN(Aphelion))
-                {
-                    if (!double.IsNaN(Perihelion) && !double.IsNaN(SemiMajorAxis))
-                    {
-                        Aphelion = (2 * SemiMajorAxis) - Perihelion;
-                    }
-                    else if (!double.IsNaN(SemiMajorAxis) && !double.IsNaN(DistanceBetweenFocci))
-                    {
-                        Aphelion = SemiMajorAxis + (DistanceBetweenFocci / 2);
-                    }
-                }
-                if (double.IsNaN(Perihelion))
-                {
-                    if (!double.IsNaN(Aphelion) && !double.IsNaN(SemiMajorAxis))
-                    {
-                        Aphelion = (2 * SemiMajorAxis) - Aphelion;
-                    }
-                    else if (!double.IsNaN(SemiMajorAxis) && !double.IsNaN(DistanceBetweenFocci))
-                    {
-                        Aphelion = SemiMajorAxis - (DistanceBetweenFocci / 2);
-                    }
+                    Mass = (4 * Math.PI * Math.PI * Math.Pow(SemiMajorAxis, 3)) / (gConstant * OrbitalPeriod * OrbitalPeriod) - MassOfCenter;
                 }
             }
         }
+
+        private void CalculateMassOfCenter()
+        {
+            if (double.IsNaN(MassOfCenter))
+            {
+                if (!double.IsNaN(Mass) && !double.IsNaN(OrbitalPeriod) && !double.IsNaN(SemiMajorAxis))
+                {
+                    MassOfCenter = (4 * Math.PI * Math.PI * Math.Pow(SemiMajorAxis, 3)) / (gConstant * OrbitalPeriod * OrbitalPeriod) - Mass;
+                }
+            }
+        }
+
+        private void CalculateSemiMajorAxis()
+        {
+            if (double.IsNaN(SemiMajorAxis))
+            {
+                if (!double.IsNaN(Mass) && !double.IsNaN(MassOfCenter) && !double.IsNaN(OrbitalPeriod))
+                {
+                    SemiMajorAxis = Math.Pow((OrbitalPeriod * OrbitalPeriod * gConstant * (Mass + MassOfCenter)) / (4 * Math.PI * Math.PI), (1 / 3));
+                }
+                else if (!double.IsNaN(Eccentricity) && !double.IsNaN(DistanceBetweenFocci))
+                {
+                    SemiMajorAxis = (DistanceBetweenFocci / 2) / Eccentricity;
+                }
+                else if (!double.IsNaN(Aphelion) && !double.IsNaN(Perihelion))
+                {
+                    SemiMajorAxis = (Aphelion + Perihelion) / 2;
+                }
+                else if (!double.IsNaN(Aphelion) && !double.IsNaN(DistanceBetweenFocci))
+                {
+                    SemiMajorAxis = Aphelion - (DistanceBetweenFocci / 2);
+                }
+                else if (!double.IsNaN(Perihelion) && !double.IsNaN(DistanceBetweenFocci))
+                {
+                    SemiMajorAxis = Perihelion + (DistanceBetweenFocci / 2);
+                }
+                else if (!double.IsNaN(SemiMinorAxis) && !double.IsNaN(Eccentricity))
+                {
+                    SemiMajorAxis = SemiMinorAxis / Math.Sqrt(1 - (Eccentricity * Eccentricity));
+                }
+            }
+
+        }
+
+        private void CalculateSemiMinorAxis()
+        {
+            if (double.IsNaN(SemiMinorAxis))
+            {
+                if (!double.IsNaN(Eccentricity) && !double.IsNaN(SemiMajorAxis))
+                {
+                    SemiMinorAxis = SemiMajorAxis * Math.Sqrt(1 - (Eccentricity * Eccentricity));
+                }
+            }
+
+        }
+
+        private void CalculateEccentricity()
+        {
+            if (double.IsNaN(Eccentricity))
+            {
+                if (!double.IsNaN(SemiMinorAxis) && !double.IsNaN(SemiMajorAxis))
+                {
+                    Eccentricity = Math.Sqrt(1 - ((SemiMinorAxis * SemiMinorAxis) / (SemiMajorAxis * SemiMajorAxis)));
+                }
+                if (!double.IsNaN(DistanceBetweenFocci) && !double.IsNaN(SemiMajorAxis))
+                {
+                    Eccentricity = DistanceBetweenFocci / (2 * SemiMajorAxis);
+                }
+            }
+        }
+
+        private void CalculateDistanceBetweenFocci()
+        {
+            if (double.IsNaN(DistanceBetweenFocci))
+            {
+                if (!double.IsNaN(Aphelion) && !double.IsNaN(Perihelion))
+                {
+                    DistanceBetweenFocci = Aphelion - Perihelion;
+                }
+                else if (!double.IsNaN(Eccentricity) && !double.IsNaN(SemiMajorAxis))
+                {
+                    DistanceBetweenFocci = Eccentricity * (2 * SemiMajorAxis);
+                }
+            }
+        }
+
+        private void CalculateOrbitalPeriod()
+        {
+            if (double.IsNaN(OrbitalPeriod))
+            {
+                if (!double.IsNaN(Mass) && !double.IsNaN(MassOfCenter) && !double.IsNaN(SemiMajorAxis))
+                {
+                    OrbitalPeriod = Math.Sqrt((4 * Math.PI * Math.PI * Math.Pow(SemiMajorAxis, 3)) / (gConstant * (Mass + MassOfCenter)));
+                }
+            }
+        }
+
+        private void CalculateAphelion()
+        {
+            if (double.IsNaN(Aphelion))
+            {
+                if (!double.IsNaN(Perihelion) && !double.IsNaN(SemiMajorAxis))
+                {
+                    Aphelion = (2 * SemiMajorAxis) - Perihelion;
+                }
+                else if (!double.IsNaN(SemiMajorAxis) && !double.IsNaN(DistanceBetweenFocci))
+                {
+                    Aphelion = SemiMajorAxis + (DistanceBetweenFocci / 2);
+                }
+            }
+        }
+
+        private void CalculatePerihelion()
+        {
+            if (double.IsNaN(Perihelion))
+            {
+                if (!double.IsNaN(Aphelion) && !double.IsNaN(SemiMajorAxis))
+                {
+                    Perihelion = (2 * SemiMajorAxis) - Aphelion;
+                }
+                else if (!double.IsNaN(SemiMajorAxis) && !double.IsNaN(DistanceBetweenFocci))
+                {
+                    Perihelion = SemiMajorAxis - (DistanceBetweenFocci / 2);
+                }
+            }
+        }
+
+        #endregion
 
         public override string ToString()
         {
