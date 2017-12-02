@@ -146,7 +146,8 @@ namespace Astronomy
             double value;
             Measurement local;
             string[] variables = new string[]{ "", "parallax", "radius", "temperature", "distance", "luminosity",
-                "absolute magnitude", "apparent magnitude", "abs/app Magnitude ratio", "redshift", "regressional velocity"};
+                "absolute magnitude", "apparent magnitude", "abs/app Magnitude ratio", "redshift", "regressional velocity", "mass",
+                "life expectancy", "escape velocity"};
             
             while (input.ToLower() != "done")
             {
@@ -167,6 +168,10 @@ namespace Astronomy
                     local = Measurement.distances;
                 else if (index == 3)
                     local = Measurement.temperature;
+                else if (index == 11)
+                    local = Measurement.masses;
+                else if (index == 12)
+                    local = Measurement.times;
                 else
                     local = Measurement.deFault;
                 UnitConversion whatWeUse = FindUnitValue(local);
@@ -210,6 +215,15 @@ namespace Astronomy
                         break;
                     case 10:
                         star.Spatial.RegressionalVelocity = whatWeUse.ToStandard(value);
+                        break;
+                    case 11:
+                        star.Mass = whatWeUse.ToStandard(value);
+                        break;
+                    case 12:
+                        star.LifeExpectancy = whatWeUse.ToStandard(value);
+                        break;
+                    case 13:
+                        star.EscapeVelocity = whatWeUse.ToStandard(value);
                         break;
                 }
                 Console.WriteLine("Sweet. Data logged. Are you done inputting values?");
@@ -596,7 +610,10 @@ namespace Astronomy
             AbsoluteMagnitude = double.NaN;
             ApparentMagnitude = double.NaN;
             MagnitudeRatio = double.NaN;
-
+            EscapeVelocity = double.NaN;
+            LifeExpectancy = double.NaN;
+            Mass = double.NaN;
+            MainSequence = true;
         }
 
         private void SunStuffs()
@@ -629,6 +646,11 @@ namespace Astronomy
             output = output + "Absolute Magnitude: " + AbsoluteMagnitude + " \n";
             output = output + "Apparent Magnitude: " + ApparentMagnitude + "\n";
             output = output + "Absolute/Apparent Magnitude Ratio: " + MagnitudeRatio + "\n";
+            output = output + "Mass: " + "\n";
+            output = output + Program.AllUnits(Program.masses, Mass);
+            output = output + "Escape Velocity: " + EscapeVelocity + "\n";
+            output = output + "Life expectancy: \n";
+            output = output + Program.AllUnits(Program.times, LifeExpectancy);
 
             
             return output;
@@ -676,7 +698,10 @@ namespace Astronomy
                         didSomething = true;
                         continue;
                     }
-
+                    if (MainSequence && !double.IsNaN(Mass))
+                    {
+                        Luminosity = Math.Pow((Program.masses.Name("solar mass").FromStandard(Mass)), 3.5) * SunValues["luminosity"];
+                    }
                 }
                 if (double.IsNaN(AbsoluteMagnitude))
                 {
@@ -712,12 +737,54 @@ namespace Astronomy
                 {
                     Spatial.Distance = Math.Pow(10, (((ApparentMagnitude - AbsoluteMagnitude) / 5) + 1));
                 }
+                if (double.IsNaN(Mass))
+                {
+                    if (!double.IsNaN(Luminosity) && MainSequence)
+                    {
+                        Mass = Program.masses.Name("solar mass").ToStandard(Math.Pow((Program.luminosity.Name("solar luminosity").FromStandard(Luminosity)), (1 / 3.5)));
+                    }
+                    else if (!double.IsNaN(LifeExpectancy) && MainSequence)
+                    {
+                        Mass = Program.masses.Name("solar mass").ToStandard(Math.Pow(1 / (Program.times.Name("year").FromStandard(LifeExpectancy)), (1 / 2.5)));
+                    }
+                }
+                if (double.IsNaN(LifeExpectancy))
+                {
+                    if (!double.IsNaN(Mass))
+                    {
+                        LifeExpectancy = 1 / Math.Pow((Program.masses.Name("solar mass").FromStandard(Mass)), 2.5);
+                    }
+                }
+                if (double.IsNaN(EscapeVelocity))
+                {
+                    if (!double.IsNaN(Mass) && !double.IsNaN(Radius))
+                    {
+                        EscapeVelocity = Math.Sqrt((2 * 6.67 * Math.Pow(10, -11) * Mass) / Radius);
+                    }
+                }
 
             }
         }
         
 
         #region values
+
+        public double LifeExpectancy
+        {
+            get; set;
+        }
+
+        public double EscapeVelocity
+        {
+            get;
+            set;
+        }
+
+        public double Mass
+        { get; set; }
+
+        public bool MainSequence
+        { get; set; }
 
         public double MagnitudeRatio
         { get; set; }
@@ -822,6 +889,15 @@ namespace MyExtensions
                 stuff.Add(a.GetName());
             stuff.TrimExcess();
             return stuff.ToArray();
+        }
+
+        public static UnitConversion Name(this UnitConversion[] thing, string name)
+        {
+            foreach (UnitConversion a in thing)
+                if (a.GetName() == name)
+                    return a;
+
+            throw new KeyNotFoundException("You didn't type in the right key you moron");
         }
     }
 }

@@ -222,7 +222,7 @@ namespace James
                     if (DameraueLevDistPercent(options[a], input) > 70)
                         return a;
                     else
-                        options[a] = "";
+                        options[a] = ""; 
                 }
             }
 
@@ -232,6 +232,7 @@ namespace James
                     if (DameraueLevDistPercent(a, input) > 70)
                         return options.ToList().IndexOf(a);
             }
+
             throw new Exception("No passible similarity was found within the list of possible options");
         }
     }
